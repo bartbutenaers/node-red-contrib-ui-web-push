@@ -1,5 +1,5 @@
 # node-red-contrib-ui-web-push
-A Node-RED widget node to send web push notification via the dashboard
+A Node-RED widget node to send web push notifications via the dashboard.
 
 ## Install
 Run the following npm command in your Node-RED user directory (typically ~/.node-red):
@@ -8,25 +8,27 @@ npm install node-red-contrib-ui-web-push
 ```
 
 Some prerequisites:
-+ This node depends works depends heavily on the [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push), so make sure those nodes have been installed!!!  Thanks to Maxim Salnikov for reviewing my developments!
-+ Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to Apple.
-+ Some browsers (e.g. Chrome) only support via an SSL connection, so make sure the Node-RED dashboard is available via https.
-+ Some browsers (e.g. Chrome) don't support self-signed certificates, so make sure to use trusted certificates (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
++ This node depends works depends heavily on the [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push), so make sure those nodes have been installed!!!
+
+   Thanks to Maxim Salnikov for reviewing my developments!
++ Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to Apple to get their attention ...
++ Some browsers (e.g. Chrome) only support web push via an SSL connection, so make sure the Node-RED dashboard is available via https.
++ Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use trusted certificates (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
 
 ## Web push introduction
-Web push notifications are messages that are sent by a website or by a web app to your device.  They are rather similar to native push notifications (i.e. APNfor iOS and FCM for Android), because web push notifications can also be delivered to your device, mobile or desktop, even when the user is not active on the platform.
+Web push notifications are messages that are sent by a website or by a web app to your device.  They are rather similar to native push notifications (i.e. APN for iOS and FCM for Android), because web push notifications can also be delivered to your device, mobile or desktop, even when the user is not active on the platform.
 
-Instead of using native push notifications to real apps (like Telegram, Pushbullet, ...), we will use web push notifications directly to the Node-RED dashboard.  This way we will try to have notifications 100% integrated into Node-RED, without having the need for third-party apps ...
+Instead of using native push notifications to real apps (like Telegram, Pushbullet, ...), we will use web push notifications directly to the Node-RED dashboard.  This way we will try to integrate notifications 100% into Node-RED, without needing third-party apps ...
 
 To be able to understand the Node-RED flow for web-push (see further below), a basic understand of the web-push flow is advised:
 
 ![Overivew](https://user-images.githubusercontent.com/14224149/74592165-e9349600-501e-11ea-8108-5f06f5564bed.png)
 
-0. In the config node (of the web-push nodes), a *key pair* (existing of a private key and a public key) is required ONCE!
+0. In the config node (of the web-push nodes), it is required once to generate a *key pair* (both a private key and a public key)!
 1. As soon as the Node-RED dashboard is opened in the browser on a device, the web-push-client node will start a ***service worker***.  
    Remark: service workers are background processes that run in a browser, which allow us to handle notifications even when our dashboard web application is not open...
 2. The service worker will get the *public* key from the Node-RED server.
-3. The service worker will pass the *public* key to an online push service.  This way the push service can link this device to the specified public key.  The push service will return a *subscription*, which is in fact an URL.
+3. The service worker will pass the *public* key to an online push service.  This way the push service can link this device to the specified public key.  The push service will return a *subscription*, which is in fact an URL (to the device via this push service).
    
    Remark: The browser will determine which online push service will be used, since almost each browser vendor will offer his own push service ...
 4. The service worker will pass the subscription to the Node-RED flow, which will arrive as a http request via a Http-in node.
@@ -36,10 +38,8 @@ To be able to understand the Node-RED flow for web-push (see further below), a b
 8. The push service will forward our request to the device, where the browser app will call our background service worker.  *The advantage is that the dashboard doesn't has to be open, in order to be able to receive notifications!*  
    
    Remark: at this point the service worker is not allowed to do lots of things, because first a user gesture is required...
-9. Our service worker will parse the request, and show a notification in the device's notification list.
-10. As soon as the user clicks on the notification, our service worker is called again.
-
-   Remark: due to the user interaction, the service worker is now allowed to do more (so it will now open the dashboard page) ...
+9. Our service worker will show a notification in the device's notification list.
+10. As soon as the user clicks on the notification, our service worker is called again.  Due to the user interaction, the service worker is now allowed to do more (so it can now open the dashboard page) ...
 
 ## Example flow
 The following example flow should be enough to get you started with web push notifications:
@@ -50,12 +50,12 @@ The following example flow should be enough to get you started with web push not
 [{"id":"69305ffc.7d54","type":"http in","z":"4142483e.06fca8","name":"Demo Web Push Manager REST API","url":"webpush","method":"post","upload":false,"swaggerDoc":"","x":950,"y":440,"wires":[["a07ca405.68cb78"]]},{"id":"a07ca405.68cb78","type":"function","z":"4142483e.06fca8","name":"Subscription Manager","func":"let pushSubscriptions = flow.get('pushSubscriptions', \"storeInFile\") || []\n  \nlet result = ''\nlet foundSubscriptionItems = [];\n\n// Determine on which subscriptions the action should be executed\nif (msg.payload.action === 'reset') {\n    // Reset has impact on all subscriptions\n    foundSubscriptionItems = pushSubscriptions;\n}\nelse {\n    // Find all subscriptions for the specified endpoint\n    foundSubscriptionItems = pushSubscriptions.filter( subscriptionItem => {\n        return subscriptionItem.endpoint == msg.payload.subscription.endpoint;\n    })\n}\n\nlet totalSubscriptionLength = pushSubscriptions.length;\n  \nswitch (msg.payload.action) {\n    case 'subscribe':\n        if (foundSubscriptionItems.length === 0) {\n            pushSubscriptions.push(msg.payload.subscription);\n            result = 'Subscription registered: ' + msg.payload.subscription.endpoint\n        } else {\n            result = 'Subscription was already registered: ' + msg.payload.subscription.endpoint\n        }\n\n        msg.statusCode = 200;\n        break;\n    \n    case 'unsubscribe':\n        if(foundSubscriptionItems.length === 0) {\n            result = 'Subscription was not found: ' + msg.payload.subscription.endpoint\n        } else {\n            pushSubscriptions = pushSubscriptions.filter(subscriptionItem => {\n                return subscriptionItem.endpoint !== msg.payload.subscription.endpoint\n            })\n            result = 'Subscription unregistered: ' + msg.payload.subscription.endpoint\n        }\n    \n        msg.statusCode = 200;\n        break;\n    case 'reset':\n        // All push subscriptions will be removed!!!!!!!!!\n        // Make sure you know what you are doing, because you cannot send notifications to these endpoints anymore!!!!!!!!!\n        pushSubscriptions = [];\n        break;\n    default:\n        result = 'Unsupported action';\n        msg.statusCode = 400;\n}\n\nmsg.payload = { result: result }\n\n// Show the evolution in number of subscriptions\nnode.status({fill:\"green\",shape:\"dot\",text: pushSubscriptions.length + \" subscription (previously \" + totalSubscriptionLength + \")\"});\n\n// Make sure this flow variable in stored in a file, because we still need the subscriptions \n// after a flow restart (otherwise there is no way anymore to push notifications to those clients!!)\nflow.set('pushSubscriptions', pushSubscriptions, \"storeInFile\")\n  \nreturn msg;","outputs":1,"noerr":0,"x":1260,"y":320,"wires":[["351ab1f9.77425e","461a0e4f.49a2c"]]},{"id":"351ab1f9.77425e","type":"http response","z":"4142483e.06fca8","name":"API Response","statusCode":"","headers":{},"x":1500,"y":320,"wires":[]},{"id":"1eb4d318.8663cd","type":"function","z":"4142483e.06fca8","name":"Get subscriptions","func":"// Use the flow variable that has been set in Demo Web Push Manager API (\"storeInFile\" context)\nmsg.subscriptions = flow.get('pushSubscriptions', \"storeInFile\") || []\n\nreturn msg;","outputs":1,"noerr":0,"x":610,"y":320,"wires":[["80f35e5a.19337"]]},{"id":"b4e51b65.60b128","type":"inject","z":"4142483e.06fca8","name":"Send custom notifcation","topic":"","payload":"{\"notification\":{\"title\":\"Hello Node-RED user !\",\"body\":\"Click me to open your dashboard\"},\"data\":{\"icon\":\"https://nodered.org/about/resources/media/node-red-icon-2.png\",\"actions\":[{\"action\":\"open_garage_cindy\",\"title\":\"Open garage Cindy\"},{\"action\":\"open_garage_bart\",\"title\":\"Open garage Bart\"}]}}","payloadType":"json","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":140,"y":420,"wires":[["342f2d69.bf6432"]]},{"id":"80f35e5a.19337","type":"web-push","z":"4142483e.06fca8","name":"","vapidConfiguration":"1da91b89.be0054","x":800,"y":320,"wires":[["f605028c.8ff83"]]},{"id":"8f232976.dbc998","type":"web-push-notification","z":"4142483e.06fca8","name":"web push notification","title":"Hello Node-RED user!!!","body":"Click me to open your dashboard","sound":"default","payload":"[{\"key\":\"icon\",\"value\":\"https://nodered.org/about/resources/media/node-red-icon-2.png\",\"type\":\"str\"}]","x":420,"y":220,"wires":[["1eb4d318.8663cd"]]},{"id":"ee7ec9c3.6ef378","type":"inject","z":"4142483e.06fca8","name":"Send predefined notification","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":160,"y":220,"wires":[["8f232976.dbc998"]]},{"id":"461a0e4f.49a2c","type":"debug","z":"4142483e.06fca8","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"false","x":1490,"y":360,"wires":[]},{"id":"db4c6c17.946a5","type":"comment","z":"4142483e.06fca8","name":"Listen for new subscriptions (\"/webpush\")","info":"The background worker service will send a request, with body.action = \"subscribe\" or \"unsubscribe\"","x":960,"y":400,"wires":[]},{"id":"2656683c.102538","type":"comment","z":"4142483e.06fca8","name":"Manage the subscriptions","info":"","x":1250,"y":280,"wires":[]},{"id":"1264b9aa.54c8e6","type":"comment","z":"4142483e.06fca8","name":"Inform client whether successfull subscription","info":"","x":1570,"y":280,"wires":[]},{"id":"1d859454.513a1c","type":"comment","z":"4142483e.06fca8","name":"Get a list of all subscriptions","info":"","x":600,"y":360,"wires":[]},{"id":"764c12f3.e425dc","type":"comment","z":"4142483e.06fca8","name":"Compose the notification","info":"","x":410,"y":180,"wires":[]},{"id":"56bd807b.91a8c","type":"comment","z":"4142483e.06fca8","name":"Send notification to the subscribers","info":"","x":820,"y":280,"wires":[]},{"id":"c8e7d6e7.c2a1e8","type":"comment","z":"4142483e.06fca8","name":"Send notification with two buttons","info":"","x":150,"y":380,"wires":[]},{"id":"d60dab0.9949e58","type":"inject","z":"4142483e.06fca8","name":"Send custom notifcation","topic":"","payload":"{\"notification\":{\"title\":\"Hello Node-RED user !\",\"body\":\"Click me to open your dashboard\"},\"data\":{\"silent\":true,\"requireInteraction \":true,\"icon\":\"https://nodered.org/about/resources/media/node-red-icon-2.png\",\"image\":\"https://user-images.githubusercontent.com/14224149/73395580-19bac700-42e0-11ea-90c2-71cb4f496637.png\"}}","payloadType":"json","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":140,"y":320,"wires":[["342f2d69.bf6432"]]},{"id":"342f2d69.bf6432","type":"change","z":"4142483e.06fca8","name":"payload => notification","rules":[{"t":"move","p":"payload","pt":"msg","to":"notification","tot":"msg"}],"action":"","property":"","from":"","to":"","reg":false,"x":380,"y":320,"wires":[["1eb4d318.8663cd"]]},{"id":"8468897a.ca5b98","type":"comment","z":"4142483e.06fca8","name":"Send notification with image","info":"","x":140,"y":280,"wires":[]},{"id":"f605028c.8ff83","type":"function","z":"4142483e.06fca8","name":"Detect unsubscriptions","func":"for (var i = 0; i < msg.payload.failed.length; i++) {\n    var failedItem = msg.payload.failed[i];\n    \n    // When we receive HTTP status codes 404 ('Not Found') or 410 ('Gone'), this means the subscription\n    // has expired or is no longer valid.  So we have to unscribe the endpoint, to make sure we don't\n    // send notifications to that subscriber anymore, since he won't get them anyway ...\n    if (failedItem.statusCode === 410) {\n        var outputMsg = {\n            payload: {\n                action: \"unsubscribe\",\n                subscription: {\n                    endpoint: failedItem.endpoint\n                }\n            }\n        };\n\n        node.send(outputMsg);\n    }\n}","outputs":1,"noerr":0,"x":1000,"y":320,"wires":[["a07ca405.68cb78"]]},{"id":"d3903144.27774","type":"inject","z":"4142483e.06fca8","name":"Remove all subscribers !!!!!!!","topic":"","payload":"{\"action\":\"reset\"}","payloadType":"json","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":960,"y":220,"wires":[["a07ca405.68cb78"]]},{"id":"1938167a.41367a","type":"ui_web_push_client","z":"4142483e.06fca8","group":"22787703.a0e968","order":3,"width":0,"height":0,"webPushConfig":"7ce8c5d1.27b5bc","subscribeAtLoad":true,"name":"","x":1480,"y":220,"wires":[[]]},{"id":"1da91b89.be0054","type":"vapid-configuration","z":"","subject":"mailto:bart.butenaers@gmail.com","publicKey":"","privateKey":"","gcmApiKey":"","name":""},{"id":"22787703.a0e968","type":"ui_group","z":"","name":"Default","tab":"80f0e178.bbf4a","disp":true,"width":"6","collapse":false},{"id":"7ce8c5d1.27b5bc","type":"vapid-configuration","z":"","subject":"legacy_1","publicKey":"BHAWRFQMuaNn_-gU3VqQk6_bHHaWehd9Zoe5uOEH47wz_BrzaPpiLCRt0kDZAKdvElPytGDz0ymCSpsSEHDdX-k","privateKey":"cFJCNzBtHDaopN71fJlCv5Jt0Fb1lRHJ64nDVJcwRng","gcmApiKey":"","name":""},{"id":"80f0e178.bbf4a","type":"ui_tab","z":"","name":"Home","icon":"dashboard","order":1,"disabled":false,"hidden":false}]
 ```
 
-1. The UI node needs to be added to install a web worker inside the browser, where the Node-RED dashboard is running.
+1. The UI node is required, because it will install a web worker inside the browser.
 2. A Http-in node will listen for new subscribers, i.e. devices that want to start getting notifications.
-3. The subscription manager will keep track of all notifications.  Make sure the list of notifications is made persistent (i.e. stored in filesystem), to make sure the subscriber list is still available after a system restart!  See [context storage](https://nodered.org/docs/user-guide/context#saving-context-data-to-the-file-system) for more information.
+3. The subscription manager will keep track of all notifications.  Make sure the list of notifications is made ***persistent*** (i.e. stored in filesystem), to make sure the subscriber list is still available after a system restart!  See [context storage](https://nodered.org/docs/user-guide/context#saving-context-data-to-the-file-system) for more information.
 4. Via a Http-out node, the subscribers will be informed whether the subscription has been completed succesfully.
 5. A predefined notification can be send e.g. by pressing the inject button.
-6. The notfication can be (pre)defined in the Web-Push-Notification node.  This way 'basic' notification can be defined, but for more advanced notifications you will need to create a custom notification (see step 10).
+6. The notfication can be (pre)defined in the Web-Push-Notification node's config screen.  That is the easiest way to define a 'basic' notification, but for more advanced notifications you will need to create a custom notification (see step 10).
 7. Get a (optionally filtered) list of subscribers to which the notifcation has to be pushed.
 8. Push the notification to the specified list of subscribers (via a public push service).
 9. When a device cannot be reached (i.e. status code ```410```), it will be removed from the subscriber list.  Otherwise the list will start growing due to unactive subscriptions...
@@ -64,10 +64,10 @@ The following example flow should be enough to get you started with web push not
 ## Node usage
 This section explains step by step how to use this node:
 1. Make sure the above flow is up and running, and that your dashboard is secured with http and a self-signed certificate!
-1. Make sure you generate a new key pair, via the button in the config node screen.  
+1. Make sure you generate a new key pair once, via the button in the config node screen.  
    ***CAUTION:*** it is highly disadvised to renew the keypair afterwards by a new key pair, because this might cause failures!  Indeed the service worker scripts have been setup based on the original keypair ...
 1. Make sure the same configuration is being used in ALL the web push related nodes!
-1. Navigate in the browser to your dashboard url (and use the same domain as specified in the common name as your certificate).
+1. Navigate in the browser to your dashboard url (and use the same domain as specified in the common name of your certificate).
 1. Your browser will aks whether the Node-RED dashboard web application is allowed to send push notifications to your device, so press the *'Allow'* button:
 
    ![Permission dialog](https://user-images.githubusercontent.com/14224149/74588971-84b70e00-5001-11ea-89cc-47f87ad0b760.png)
@@ -87,7 +87,7 @@ The second inject button (in the above example flow) will show an image inside t
 
 ![Show image](https://user-images.githubusercontent.com/14224149/74590860-bdabae80-5012-11ea-96f5-b2949e52cbfc.png)
 
-Which might be convenient, for example to share some critical events immediately.
+Which might be convenient, for example to share some critical event information immediately.  So in fact this way the information of the event will also be pushed to the client, to avoid that the user needs to collect the information manually inside the dashboard application.
 
 Remark: make sure the image size and aspect ratio follows the [guidelines](https://documentation.onesignal.com/docs/web-push-notification-icons#section-image).
 
@@ -97,7 +97,7 @@ The third inject button (in the above example flow) will show two buttons inside
 
 ![Buttons](https://user-images.githubusercontent.com/14224149/74591081-1bd99100-5015-11ea-9043-0fdf51936f1c.png)
 
-From the custom JSON notification definition, it becomes clear that the buttons are linked to the actions ´´´open_garage_cindy``` and ```open_garage_bart```:
+From the custom JSON notification definition, it becomes clear that the buttons are linked to the actions ```open_garage_cindy``` and ```open_garage_bart```:
 ```
 {
     "notification": {
