@@ -39,5 +39,10 @@ CAUTION: the push manager will become a new node in the near future!
 ## Node usage
 
 This section explains step by step how to use this node:
-1. Make sure the above flow is up and running.
-1. 
+1. Make sure the above flow is up and running, and that your dashboard is secured with http and a self-signed certificate!
+1. Navigate in the browser to your dashboard url.
+1. Your browser will aks whether the Node-RED dashboard web application is allowed to send push notifications to your device, so press the *'Allow'* button:
+
+   ![Permission dialog](https://user-images.githubusercontent.com/14224149/74588971-84b70e00-5001-11ea-89cc-47f87ad0b760.png)
+
+1. Now you should be able to send a notification to your device, via the inject buttons in the above Node-RED flow...
