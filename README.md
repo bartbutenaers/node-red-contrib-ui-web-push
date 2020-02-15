@@ -40,9 +40,71 @@ CAUTION: the push manager will become a new node in the near future!
 
 This section explains step by step how to use this node:
 1. Make sure the above flow is up and running, and that your dashboard is secured with http and a self-signed certificate!
-1. Navigate in the browser to your dashboard url.
+1. Make sure you generate a new key pair, via the button in the config node screen.  
+   ***CAUTION:*** it is highly disadvised to renew the keypair afterwards by a new key pair, because this might cause failures!  Indeed the service worker scripts have been setup based on the original keypair ...
+1. Make sure the same configuration is being used in ALL the web push related nodes!
+1. Navigate in the browser to your dashboard url (and use the same domain as specified in the common name as your certificate).
 1. Your browser will aks whether the Node-RED dashboard web application is allowed to send push notifications to your device, so press the *'Allow'* button:
 
    ![Permission dialog](https://user-images.githubusercontent.com/14224149/74588971-84b70e00-5001-11ea-89cc-47f87ad0b760.png)
 
 1. Now you should be able to send a notification to your device, via the inject buttons in the above Node-RED flow...
+1. A notification should appear on your device (even when your Node-RED dashboard is not open at the moment!).  For example on Windows 10:
+
+   ![Windows 10](https://user-images.githubusercontent.com/14224149/74590953-b20cb780-5013-11ea-99ed-2002a7b37342.png)
+   
+1. After clicking on the notification, a browser session should open automatically to show a Node-RED dashboard page.
+
+## Advanced examples
+
+### Show image inside the notification
+
+The second inject button (in the above example flow) will show an image inside the notification:
+
+![Show image](https://user-images.githubusercontent.com/14224149/74590860-bdabae80-5012-11ea-96f5-b2949e52cbfc.png)
+
+Which might be convenient, for example to share some critical events immediately.
+
+Remark: make sure the image size and aspect ratio follows the [guidelines](https://documentation.onesignal.com/docs/web-push-notification-icons#section-image).
+
+### Show button(s) inside the notification
+
+The third inject button (in the above example flow) will show two buttons inside the notification:
+
+![Buttons](https://user-images.githubusercontent.com/14224149/74590742-71ac3a00-5011-11ea-8c54-5d29e5d280bd.png)
+
+From the custom JSON notification definition, it becomes clear that the buttons are linked to the actions ´´´open_garage_cindy``` and ```open_garage_bart```:
+```
+{
+    "notification": {
+        "title": "Hello Node-RED user !",
+        "body": "Click me to open your dashboard"
+    },
+    "data": {
+        "icon": "https://nodered.org/about/resources/media/node-red-icon-2.png",
+        "actions": [
+            {
+                "action": "open_garage_cindy",
+                "title": "Open garage Cindy"
+            },
+            {
+                "action": "open_garage_bart",
+                "title": "Open garage Bart"
+            }
+        ]
+    }
+}
+```
+
+You can handle both actions easily in the Node-RED flow by adding two Http-in nodes:
+
+![Http-in nodes](https://user-images.githubusercontent.com/14224149/74591010-53940900-5014-11ea-9841-a71de21ed6b0.png)
+
+```
+[{"id":"d83aebe4.654b38","type":"http in","z":"4142483e.06fca8","name":"","url":"/open_garage_bart","method":"get","upload":false,"swaggerDoc":"","x":120,"y":540,"wires":[["9d33f91c.406488","d785dcea.a1ac"]]},{"id":"9d33f91c.406488","type":"debug","z":"4142483e.06fca8","name":"Notification action to open garage bart","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","x":450,"y":580,"wires":[]},{"id":"d6a29727.80ac58","type":"http in","z":"4142483e.06fca8","name":"","url":"/open_garage_cindy","method":"get","upload":false,"swaggerDoc":"","x":130,"y":640,"wires":[["741b827f.a177ec","8d367e5d.c3abe"]]},{"id":"741b827f.a177ec","type":"debug","z":"4142483e.06fca8","name":"Notification action to open garage cindy","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","x":460,"y":680,"wires":[]},{"id":"d785dcea.a1ac","type":"http response","z":"4142483e.06fca8","name":"Answer 'ok'","statusCode":"200","headers":{},"x":370,"y":540,"wires":[]},{"id":"8d367e5d.c3abe","type":"http response","z":"4142483e.06fca8","name":"Answer 'ok'","statusCode":"200","headers":{},"x":370,"y":640,"wires":[]}]
+```
+As soon as a button in the notification is clicked, a debug message should appear in the Node-RED flow.  These input messages can now be used to control your smart home ...
+
+### Other examples
+
+Much more other examples can be found on the internet.  If you have created something mentioning here, please let me know!
