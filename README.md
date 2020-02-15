@@ -14,10 +14,35 @@ Some prerequisites:
 + Some browsers (e.g. Chrome) don't support self-signed certificates, so make sure to use trusted certificates (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
 
 ## Web push introduction
+Web push notifications are messages that are sent by a website or by a web app to your device.  They are rather similar to native push notifications (i.e. APNfor iOS and FCM for Android), because web push notifications can also be delivered to your device, mobile or desktop, even when the user is not active on the platform.
+
+Instead of using native push notifications to real apps (like Telegram, Pushbullet, ...), we will use web push notifications directly to the Node-RED dashboard.  This way we will try to have notifications 100% integrated into Node-RED, without having the need for third-party apps ...
+
+To be able to understand the Node-RED flow for web-push (see further below), a basic understand of the web-push flow is advised:
+
+![Overivew](https://user-images.githubusercontent.com/14224149/74592165-e9349600-501e-11ea-8108-5f06f5564bed.png)
+
+0. In the config node (of the web-push nodes), a *key pair* (existing of a private key and a public key) is required ONCE!
+1. As soon as the Node-RED dashboard is opened in the browser on a device, the web-push-client node will start a ***service worker***.  
+   Remark: service workers are background processes that run in a browser, which allow us to handle notifications even when our dashboard web application is not open...
+2. The service worker will get the *public* key from the Node-RED server.
+3. The service worker will pass the *public* key to an online push service.  This way the push service can link this device to the specified public key.  The push service will return a *subscription*, which is in fact an URL.
+   
+   Remark: The browser will determine which online push service will be used, since almost each browser vendor will offer his own push service ...
+4. The service worker will pass the subscription to the Node-RED flow, which will arrive as a http request via a Http-in node.
+5. The subscription manager will store the credentials in a list.  In the example flow below, the credential list is a flow variable.
+6. When the Node-RED flow wants to send a notification, all subscriptions will be loaded (e.g. from the flow variable).
+7. The notification is send to all subscriptions.  Which means that all the subscription URLs will be called, so a request will be send to (one or more) online push services.  This request will contain the key pair, to allow the push service to check whether we are authorized to send a notification to the specified subscription.
+8. The push service will forward our request to the device, where the browser app will call our background service worker.  *The advantage is that the dashboard doesn't has to be open, in order to be able to receive notifications!*  
+   
+   Remark: at this point the service worker is not allowed to do lots of things, because first a user gesture is required...
+9. Our service worker will parse the request, and show a notification in the device's notification list.
+10. As soon as the user clicks on the notification, our service worker is called again.
+
+   Remark: due to the user interaction, the service worker is now allowed to do more (so it will now open the dashboard page) ...
 
 ## Example flow
-
-CAUTION: the push manager will become a new node in the near future!
+The following example flow should be enough to get you started with web push notifications:
 
 ![Example flow](https://user-images.githubusercontent.com/14224149/74588733-53d5d980-4fff-11ea-9b7f-9950c3b71d69.png)
 
@@ -34,10 +59,9 @@ CAUTION: the push manager will become a new node in the near future!
 7. Get a (optionally filtered) list of subscribers to which the notifcation has to be pushed.
 8. Push the notification to the specified list of subscribers (via a public push service).
 9. When a device cannot be reached (i.e. status code ```410```), it will be removed from the subscriber list.  Otherwise the list will start growing due to unactive subscriptions...
-10. Beside to predefined notifications, it is also possible to create a notification from scratch (in JSON format).  This allows us to create more advanced notifications, which are not possible via the 
+10. Beside to predefined notifications, it is also possible to create a notification from scratch (in JSON format).  This allows us to create more advanced notifications, which are not possible via the predefined notifications...
 
 ## Node usage
-
 This section explains step by step how to use this node:
 1. Make sure the above flow is up and running, and that your dashboard is secured with http and a self-signed certificate!
 1. Make sure you generate a new key pair, via the button in the config node screen.  
@@ -51,7 +75,7 @@ This section explains step by step how to use this node:
 1. Now you should be able to send a notification to your device, via the inject buttons in the above Node-RED flow...
 1. A notification should appear on your device (even when your Node-RED dashboard is not open at the moment!).  For example on Windows 10:
 
-   ![Windows 10](https://user-images.githubusercontent.com/14224149/74590953-b20cb780-5013-11ea-99ed-2002a7b37342.png)
+   ![Windows 10](https://user-images.githubusercontent.com/14224149/74591382-dd91a100-5017-11ea-8ecb-2306d9fb834c.png)
    
 1. After clicking on the notification, a browser session should open automatically to show a Node-RED dashboard page.
 
