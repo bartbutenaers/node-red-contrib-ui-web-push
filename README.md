@@ -71,7 +71,7 @@ Remark: make sure the image size and aspect ratio follows the [guidelines](https
 
 The third inject button (in the above example flow) will show two buttons inside the notification:
 
-![Buttons](https://user-images.githubusercontent.com/14224149/74590742-71ac3a00-5011-11ea-8c54-5d29e5d280bd.png)
+![Buttons](https://user-images.githubusercontent.com/14224149/74591081-1bd99100-5015-11ea-9043-0fdf51936f1c.png)
 
 From the custom JSON notification definition, it becomes clear that the buttons are linked to the actions ´´´open_garage_cindy``` and ```open_garage_bart```:
 ```
