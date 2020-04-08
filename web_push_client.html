@@ -31,7 +31,11 @@
                 }},
             height: {value: 0},
             webPushConfig: {value:"", type: "vapid-configuration"},
-            subscribeAtLoad: {value: true},
+            sendSubscription: {value: false},
+            showConfirmations: {value: false},
+            disableButton: {value: false},
+            subscribeLabel: {value:"Subscribe", required: true},
+            unsubscribeLabel: {value:"Unsubscribe", required: true},
             name: {value: ''}
         },
         inputs:1,
@@ -50,7 +54,17 @@
                 width: "#node-input-width",
                 height: "#node-input-height",
                 group: "#node-input-group"
-            });
+            }); 
+ 
+            var dependencyType = RED.nodes.getType("web-push");
+            
+            // Show the form tip when the web-push type is not available
+            // (i.e. when the node-red-contrib-web-push node dependency has not been installed by the user)
+            if (dependencyType) {
+                $("#tip-dependency").hide();
+            } else {
+                $("#tip-dependency").show();
+            }
         },
         oneditsave: function() {
             var node = this;
@@ -70,17 +84,38 @@
         <!-- Node-Red will replace this input element by a drop-down (with available Web Push configurations) -->
         <input type="text" id="node-input-webPushConfig">
     </div>
+    <br>
+    <div class="form-row">
+        <label for="node-input-subscribeLabel"><i class="fa fa-font"></i> Subscribe label</label>
+        <input type="text" id="node-input-subscribeLabel" placeholder="Subscribe button label">
+    </div>
+    <div class="form-row">
+        <label for="node-input-unsubscribeLabel"><i class="fa fa-font"></i> Unsubscribe label</label>
+        <input type="text" id="node-input-unsubscribeLabel" placeholder="Unsubscribe button label">
+    </div>
     <div class="form-row">
         <label>&nbsp;</label>
-        <!--TODO Disabled checkbox added for completeness--> 
-        <input type="checkbox" id="node-input-subscribeAtLoad" style="display: inline-block; width: auto; vertical-align: top;" disabled>
-        <label for="node-input-subscribeAtLoad" style="width:70%;color: #ccc;"> Send subscription at every page load</label>
+        <input type="checkbox" id="node-input-sendSubscription" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-sendSubscription" style="width:70%;"> Send subscription at every page load</label>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-showConfirmations" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-showConfirmations" style="width:70%;"> Show confirmations at successfull (un)subscriptions</label>
+    </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-disableButton" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-disableButton" style="width:70%;"> Disable button when no browser support</label>
     </div>
     <br>
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+    <br>
+    <div class="form-tips" id="tip-dependency" style="width: 100%;max-width: 100%;" hidden>!!!!!!! Install the node-red-contrib-web-push (to have a config) !!!!!!!.</div>
+ 
 </script>
 <script type="text/html" data-help-name="ui_web_push_client">
     <p>A Node Red UI widget node to enable web push notifications for the Node-RED dashboard.</p>
