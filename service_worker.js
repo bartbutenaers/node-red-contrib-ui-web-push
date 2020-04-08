@@ -8,65 +8,15 @@
 console.log("Node-RED dashboard service worker has been registered");
 
 // The values of these 3 placeholders will be injected by the http endpoint, before serving it to the browser
-const publicVapidKey = "#public-vapid-key#";
+//const publicVapidKey = "#public-vapid-key#";
 const nodeRedUrl     = "#node-red-url#";
 const dashboardPath  = "#dashboard-path#";
-
-// urlB64ToUint8Array is a magic function that will encode the base64 public key
-// to Array buffer which is needed by the subscription option
-const urlB64ToUint8Array = base64String => {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
-    const rawData = atob(base64)
-    const outputArray = new Uint8Array(rawData.length)
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i)
-    }
-    return outputArray
-}
-
-async function subscribe(toPushManager, toNodeRed) {
-    try {
-        // Subscribe to the PushManager (from Google, Mozilla, Apple, ...) if requested
-        if (toPushManager) {
-            const applicationServerKey = urlB64ToUint8Array(publicVapidKey);
-            const options = { applicationServerKey, userVisibleOnly: true }
-            
-            self.subscription = await self.registration.pushManager.subscribe(options);
-        }
-        
-        // Subscribe to the Node-RED flow if requested
-        if (toNodeRed) {
-            var body = {};
-            body.subscription = subscription;
-            body.action = "subscribe";
-
-            var bodyAsJson = JSON.stringify(body);
-            
-            // Create a full url, based on the base url and the relative path
-            var url = new URL("webpush", nodeRedUrl).toString();
-            
-            // Save the subscription to the backend
-            var response = await fetch(url, {
-                method: 'post',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: bodyAsJson,
-            })
-        }
-    }
-    catch (err) {
-        console.log('Error', err)
-    }
-}
 
 // Listen for an installation request from the browser
 self.addEventListener('install', async function(event) {
     console.log("Node-RED dashboard service worker has been installed");
     
-    // immediately promote it to "active".
-    // TODO misschien niet nodig, want eigenlijk moeten we wachten tot het eerste push bericht (om te activeren) ????
+    // Make sure this service worker immediately becomes "active".
     await self.skipWaiting();
 });
 
@@ -75,24 +25,7 @@ self.addEventListener('install', async function(event) {
 // The primary use of onactivate is for cleanup of resources used in previous versions of this Service worker script.
 self.addEventListener('activate', async function() {
     console.log("Node-RED dashboard service worker has been activated");
-    
-    // Subscribe first to the push manager and afterwards to the Node-RED flow
-    await subscribe(true, true);
 })
-
-// Listen for messages from the web_push_client.js (which means from the main thread)
-self.addEventListener('message', function(event) { 
-    console.log("Event received in the service worker: " + event.data);
-  
-    switch(event.data) {
-        case "subscribeToNodeRed":
-            // Subscribe (again) to the push manager and the Node-RED flow
-            subscribe(true, true);
-            break;
-        default:
-            console.log("Unsupported event received in service worker");
-    }
-});
 
 // Listen for push event, being send by the Node-RED flow
 self.addEventListener('push', function(event) {
@@ -221,17 +154,25 @@ self.addEventListener('notificationclick', async function(event) {
         })
     }
     else {
-        // By clicking on the notification, we will open the dashboard in a new window/tabsheet (depending on browser settings)
+        // By clicking on the notification, we will open the dashboard:
+        // - When not open yet, then open it in a new window/tabsheet (depending on browser settings)
+        // - When open yet (but possible not visible), then focus on the existing window/tabsheet.
+        // This way we will avoid opening new dashboard window/tabsheets over and over again ...
+        
         // Create a full url, based on the base url and the relative path
         url = new URL(dashboardPath, nodeRedUrl).toString();
         
-        event.waitUntil(   
-            clients.matchAll({type: 'window'}).then( windowClients => {
+        event.waitUntil(
+            // Get all current “window” type clients (i.e. tabs and windows but not web workers).
+            // And only clients that are not controlled by this service worker (via includeUncontrolled)
+            clients.matchAll({type: 'window', includeUncontrolled: true}).then( windowClients => {
                 // Check if there is already a window/tab open with the target URL
                 for (var i = 0; i < windowClients.length; i++) {
                     var client = windowClients[i];
-                    // If so, just focus it.
-                    if (client.url === url && 'focus' in client) {
+                    
+                    // Remark: the dashboard url can already be open, but with some extra data in the url path...
+                    if (client.url.startsWith(url) && 'focus' in client) {
+                        // If so, just focus it.
                         return client.focus();
                     }
                 }
@@ -246,32 +187,14 @@ self.addEventListener('notificationclick', async function(event) {
     event.notification.close(); // Android needs explicit close.
 });
 
-// If the user manually decides to remove the notifications
-// https://stackoverflow.com/questions/48729538/chrome-notifications-unsubscribe-event
-// But this doesn't work on Chrome:
-// https://medium.com/@madridserginho/how-to-handle-webpush-api-pushsubscriptionchange-event-in-modern-browsers-6e47840d756f
-// TODO But we can workaround that: when we get status code 410, we should remove the subscription from backend (becaused expired or onsubscribed)
-// https://developers.google.com/web/fundamentals/push-notifications/common-issues-and-reporting-bugs
-// But seems Google is implementing it: https://bugs.chromium.org/p/chromium/issues/detail?id=646721
-// And some other possibilities : https://medium.com/@madridserginho/how-to-handle-webpush-api-pushsubscriptionchange-event-in-modern-browsers-6e47840d756f
 self.addEventListener('pushsubscriptionchange', async function() {
-    console.log('Push event but no data');
-    
-    var body = {};
-    body.subscription = subscription;
-    body.action = "unsubscribe";
-
-    var bodyAsJson = JSON.stringify(body);
-    
-    // Create a full url, based on the base url and the relative path
-    url = new URL("webpush", nodeRedUrl).toString();
-
-    // Save the subscription to the backend
-    var response = await fetch(url, {
-        method: 'post',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: bodyAsJson,
-    })
+    // ========================== DUE TO LACK OF SUPPORT, THIS EVENT WON'T BE USED HERE =============================
+    // If the user manually decides to remove the notifications
+    // https://stackoverflow.com/questions/48729538/chrome-notifications-unsubscribe-event
+    // But this doesn't work on Chrome:
+    // https://medium.com/@madridserginho/how-to-handle-webpush-api-pushsubscriptionchange-event-in-modern-browsers-6e47840d756f
+    // TODO But we can workaround that: when we get status code 410, we should remove the subscription from backend (becaused expired or onsubscribed)
+    // https://developers.google.com/web/fundamentals/push-notifications/common-issues-and-reporting-bugs
+    // But seems Google is implementing it: https://bugs.chromium.org/p/chromium/issues/detail?id=646721
+    // And some other possibilities : https://medium.com/@madridserginho/how-to-handle-webpush-api-pushsubscriptionchange-event-in-modern-browsers-6e47840d756f
 });
