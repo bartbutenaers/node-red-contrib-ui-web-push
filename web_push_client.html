@@ -119,4 +119,14 @@
 </script>
 <script type="text/html" data-help-name="ui_web_push_client">
     <p>A Node Red UI widget node to enable web push notifications for the Node-RED dashboard.</p>
+    <p><strong>Subscribe label:</strong><br/>
+    The label that needs to be displayed on the <i>"Subscribe"</i> button.</p>
+    <p><strong>Unsubscribe label:</strong><br/>
+    The label that needs to be displayed on the <i>"Unsubscribe"</i> button.</p>
+    <p><strong>Send subscription at every page load:</strong><br/>
+    When activated, then the dashboard client will send at EVERY startup the current subscription (when available) automatically to the server, which is most of the time only overhead.</p>
+    <p><strong>Show confirmations at successfull (un)subscriptions:</strong><br/>
+    When activated, a confirmation popup will appear when a subscription or unsubscription is successfull (after the button has been clicked).</p>
+    <p><strong>Disable button when no browser support:</strong><br/>
+    When activated, the 'Subscribe' button will be disabled when the browser doesn't support service workers or push notifications.</p>    
 </script>
