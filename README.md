@@ -17,6 +17,12 @@ Make sure to read these prerequisites:
 + Some browsers (e.g. Chrome) only support web push via an SSL connection, so make sure the Node-RED dashboard is available via https.
 + Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use trusted certificates (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
 
+## Support my Node-RED developments
+
+Please buy my wife a coffee to keep her happy, while I am busy developing Node-RED stuff for you ...
+
+<a href="https://www.buymeacoffee.com/bartbutenaers" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy my wife a coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+
 ## Web push quick intro
 
 Web push notifications are messages that are sent by a website or by a web app to your device.  Those web push notifications are rather similar to native push notifications (i.e. APN for iOS and FCM for Android), because web push notifications can also be delivered to your device, mobile or desktop.  And the web push notifications will also arrive on your device, even when the browser app is not open at that moment.
