@@ -1,5 +1,5 @@
 # node-red-contrib-ui-web-push
-A Node-RED widget node to send web push notifications via the dashboard.
+A Node-RED widget node to send web push notifications via the Node-RED dashboard.
 
 Really would like to thank Maxim Salnikov ([@webmaxru](https://twitter.com/webmaxru)) - PWA speaker/trainer, organizer of [PWA Slack](https://aka.ms/pwa-slack) and [PWACon](https://twitter.com/pwaconf)!
 By reviewing this node and sharing his knowledge about web push notifications, the user friendlyness of this UI node has been improved heavily!
@@ -95,7 +95,7 @@ CAUTION: This is (probably) currently only available on Chrome.
 
 By clicking the Inject node's button, a notification will appear that contains two buttons:
 
-![Buttons](https://user-images.githubusercontent.com/14224149/74591081-1bd99100-5015-11ea-9043-0fdf51936f1c.png)
+![Buttons](https://user-images.githubusercontent.com/14224149/74590860-bdabae80-5012-11ea-96f5-b2949e52cbfc.png)
 
 How does this work:
 1. Via the Inject node, the following custom JSON notification definition will be triggered:
@@ -129,7 +129,7 @@ How does this work:
 
 ### Other examples
 
-Much more other examples can be found on the internet.  If you have created something mentioning here, please let me know!
+Much more other examples of web push notifications can be found on the internet.  If you have implemented an interesting use case, please let me know!
 
 ## The web push mechanism in depth
 
