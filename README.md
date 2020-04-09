@@ -98,6 +98,30 @@ As soon as a user has subscribed successfully to receive notifications, the labe
 
 1. When a new notification is triggered again in the Node-RED flow, it won't be send anymore to this device.
 
+## Node properties
+
+### Subscribe label
+
+Specify which text needs to be displayed on the *"Subscribe"* button.
+
+### Unsubscribe label
+
+Specify which text needs to be displayed on the *"Unsubscribe"* button.
+
+### Send subscription at every page load
+
+When activated, then the dashboard client will send at EVERY startup the current subscription (when available) automatically to the server.  Mostly the subscription is already available on the server (since it has been stored in the subscription manager as soon as the "Subscribe" button has been clicked), so it will be ignored as duplicate by the subscription manager.
+
+But in exceptional cases this might be activated e.g. when the current subscriptions got lost to a technical failure.  That way you can rebuild the list of current subscriptions.
+
+### Show confirmations at successfull (un)subscriptions
+
+When activated, a confirmation popup will appear when a subscription or unsubscription is successfull (after the button has been clicked).  But this is deactivated by default since the button label is also automatically changed, as soon as the (un)subscription was successfull...
+
+### Disable button when no browser support
+
+When activated, the 'Subscribe' button will be disabled when the browser doesn't support service workers or push notifications.  Otherwise the button would be enabled, but an error popup will occur (about the lack of support) as soon as the button is clicked.
+
 ## Other examples
 
 ### Create custom notification (with embedded image)
@@ -120,6 +144,8 @@ Remark: make sure the image size and aspect ratio follows the [guidelines](https
 A typical use case of this flow is sending an image captured by an IP camera, when an intruder has been detected.  By including the image inside the notification, to quickly determine whether there is a real alarm or not (without having to search for the video footage inside your system).  
 
 *Rule of thumb: Make sure useful information about the event is being send inside the message.  This way the information of the event will also be pushed to the client, to avoid that the user needs to collect the information manually inside the dashboard application.*
+
+Thanks to Shutterstock for this royality free [image](https://www.shutterstock.com/image-photo/funny-childlike-burglar-bandit-puts-hands-330700175)!
 
 ### Show button(s) inside the notification
 
