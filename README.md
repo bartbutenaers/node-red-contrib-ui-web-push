@@ -2,7 +2,7 @@
 A Node-RED widget node to send web push notifications via the Node-RED dashboard.
 
 Really would like to thank Maxim Salnikov ([@webmaxru](https://twitter.com/webmaxru)) - PWA speaker/trainer, organizer of [PWA Slack](https://aka.ms/pwa-slack) and [PWACon](https://twitter.com/pwaconf)!
-By reviewing this node and sharing his knowledge about web push notifications, the user friendlyness of this UI node has been improved heavily!
+By reviewing this node and sharing his knowledge about web push notifications, the user friendlyness of this UI node has been improved heavily!  Lots of the practical tips on this page are provided by Maxim ...
 
 ## Install
 
@@ -13,9 +13,10 @@ npm install node-red-contrib-ui-web-push
 
 Make sure to read these prerequisites:
 + It is **REQUIRED** that the [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) are also installed!!  This UI node uses the config node from that package!
-+ Use a browser that supports service workers and push notifications.  The Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to try to convince Apple ...
-+ Some browsers (e.g. Chrome) only support web push via an SSL connection, so make sure the Node-RED dashboard is available via https.
-+ Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use trusted certificates (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
++ Use a ***browser that supports*** service workers and push notifications.  The Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to try to convince Apple ...
++ Some browsers (e.g. Chrome) only support web push via an ***SSL connection***, so make sure the Node-RED dashboard is available via https.
++ Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use ***trusted certificates*** (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
++ The Node-RED ***context should be persistent***!!  Indeed the example subscription manager (Function node) will store all subscriptions on flow memory, which need to be remembered even after a system restart.  Otherwise the subscriptions will be lost, thus it would become impossible to send notifications to those devices...
 
 ## Support my Node-RED developments
 
@@ -30,6 +31,8 @@ Web push notifications are messages that are sent by a website or by a web app t
 The Node-RED dashboard is a web app, and no native (Windows, Android, iOs, ...) app.  That is the reason why we will need to send web push notifications, instead of native notifications.  That is the big difference with native messaging apps (like Telegram, Pushbullet, ...): they offer a native app on all platforms, to be able to send native notifcations on all those platforms.
 
 The main target of this UI node is to integrate notifications 100% into Node-RED, without needing any of those third-party apps ...
+
+Remark: if the dashboard is being used in multiple browsers (Chrome, Firefox, ...) on the same device, then a user can subscribe to receive notifications in EACH browser.  But of course then the user will get ***duplicate notifications*** on that device, since each browser uses its own cloud service solution.
 
 ## Basic example flow
 
@@ -95,7 +98,7 @@ As soon as a user has subscribed successfully to receive notifications, the labe
 
 1. When a new notification is triggered again in the Node-RED flow, it won't be send anymore to this device.
 
-## Advanced examples
+## Other examples
 
 ### Create custom notification (with embedded image)
 
@@ -199,3 +202,44 @@ To be able to understand the Node-RED flow for web-push (see further below), a b
 9. Our service worker will show a notification in the device's notification list.
 
 10. As soon as the user clicks on the notification, our service worker is called again.  Due to the user interaction, the service worker is now allowed to do more (so it can now open the dashboard page) ...
+
+## Advanced stuff
+
+This section contains information that will not be needed in normal circumstances.
+
+## Force reload of service worker
+
+The service worker javascript file should be downloaded - by the browser - from the Node-RED server, as soon as the file has changed (e.g. when a new version of this node will be released).  All modern browsers should behave like that, although I experience that sometimes an old cached version is used.
+
+To troubleshoot such rare cases, an input message can be injected to force the service worker javascript file to be reloaded:
+
+![Force reload](https://user-images.githubusercontent.com/14224149/78935931-eea5de00-7aad-11ea-905b-2657551e099d.png)
+```
+[{"id":"218acb09.624d54","type":"ui_web_push_client","z":"4142483e.06fca8","group":"22787703.a0e968","order":3,"width":0,"height":0,"webPushConfig":"1da91b89.be0054","sendSubscription":true,"showConfirmations":true,"disableButton":false,"subscribeLabel":"Subscribe","unsubscribeLabel":"Unsubscribe","name":"","x":1320,"y":500,"wires":[[]]},{"id":"39984194.b6179e","type":"inject","z":"4142483e.06fca8","name":"Reload service worker","topic":"","payload":"reload_service_worker","payloadType":"str","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":1080,"y":500,"wires":[["218acb09.624d54"]]},{"id":"22787703.a0e968","type":"ui_group","z":"","name":"Web push notifications","tab":"80f0e178.bbf4a","disp":true,"width":"6","collapse":false},{"id":"1da91b89.be0054","type":"vapid-configuration","z":"","subject":"mailto:<your_email_address>","publicKey":"","privateKey":"","gcmApiKey":"","name":""},{"id":"80f0e178.bbf4a","type":"ui_tab","z":"","name":"Home","icon":"dashboard","order":1,"disabled":false,"hidden":false}]
+```
+
+## Automatic unsubscriptions
+
+In some exceptional cases it might be required to remove subscriptions automatically, although this is NOT advised!
+
+Use case:
+1. A user subscribes to receive notifications via the 'Subscribe' button.
+
+2. Afterwards he changes his mind and - instead of using the 'Unsubscribe' button - he blocks the Node-RED dashboard url from sending notifications via his browser settings.
+
+3. Since the Node-RED flow is not aware about this, it will keep sending notifications to that subscription.  And these attempts will fail over and over again.
+
+4. To avoid that the number of obsolete subscriptions will continue to grow in time, you might remove subscriptions that have failed.
+
+The following example flow creates unsubscribe messages automatically, when the notification sending fails for a subscription:
+
+![Automatic remove](https://user-images.githubusercontent.com/14224149/78936474-edc17c00-7aae-11ea-9ff2-5e9d097b10a1.png)
+
+```
+[{"id":"a07ca405.68cb78","type":"function","z":"4142483e.06fca8","name":"Subscription Manager","func":"let pushSubscriptions = flow.get('pushSubscriptions', \"storeInFile\") || []\n  \nlet result = ''\nlet foundSubscriptionItems = [];\n\n// Determine on which subscriptions the action should be executed\nif (msg.payload.action === 'reset') {\n    // Reset has impact on all subscriptions\n    foundSubscriptionItems = pushSubscriptions;\n}\nelse {\n    // Find all subscriptions for the specified endpoint\n    foundSubscriptionItems = pushSubscriptions.filter( subscriptionItem => {\n        return subscriptionItem.endpoint == msg.payload.endpoint;\n    })\n}\n\nlet totalSubscriptionLength = pushSubscriptions.length;\n  \nswitch (msg.topic) {\n    case 'subscribe':\n        var subscription = msg.payload;\n        if (foundSubscriptionItems.length === 0) {\n            pushSubscriptions.push(subscription);\n            result = 'Subscription registered: ' + subscription.endpoint\n        } else {\n            result = 'Subscription was already registered: ' + subscription.endpoint\n        }\n\n        msg.statusCode = 200;\n        break;\n    \n    case 'unsubscribe':\n        var unsubscription = msg.payload;\n        if(foundSubscriptionItems.length === 0) {\n            result = 'Subscription was not found: ' + unsubscription.endpoint\n        } else {\n            pushSubscriptions = pushSubscriptions.filter(subscriptionItem => {\n                return subscriptionItem.endpoint !== unsubscription.endpoint\n            })\n            result = 'Subscription unregistered: ' + unsubscription.endpoint\n        }\n    \n        msg.statusCode = 200;\n        break;\n    case 'reset':\n        // All push subscriptions will be removed!!!!!!!!!\n        // Make sure you know what you are doing, because you cannot send notifications to these endpoints anymore!!!!!!!!!\n        pushSubscriptions = [];\n        break;\n    default:\n        result = 'Unsupported action';\n        msg.statusCode = 400;\n}\n\nmsg.payload = { result: result }\n\n// Show the evolution in number of subscriptions\nnode.status({fill:\"green\",shape:\"dot\",text: pushSubscriptions.length + \" subscription (previously \" + totalSubscriptionLength + \")\"});\n\n// Make sure this flow variable in stored in a file, because we still need the subscriptions \n// after a flow restart (otherwise there is no way anymore to push notifications to those clients!!)\nflow.set('pushSubscriptions', pushSubscriptions, \"storeInFile\")\n  \nreturn msg;","outputs":1,"noerr":0,"x":1460,"y":220,"wires":[[]]},{"id":"80f35e5a.19337","type":"web-push","z":"4142483e.06fca8","name":"Send notification to the subscribers","vapidConfiguration":"1da91b89.be0054","x":940,"y":220,"wires":[["15d435e7.40bdea"]]},{"id":"15d435e7.40bdea","type":"function","z":"4142483e.06fca8","name":"Detect unsubscriptions","func":"for (var i = 0; i < msg.payload.failed.length; i++) {\n    var failedItem = msg.payload.failed[i];\n    \n    // When we receive HTTP status codes 404 ('Not Found') or 410 ('Gone'), this means the subscription\n    // has expired or is no longer valid.  So we have to unscribe the endpoint, to make sure we don't\n    // send notifications to that subscriber anymore, since he won't get them anyway ...\n    if (failedItem.statusCode === 410) {\n        var outputMsg = {\n            payload: {\n                action: \"unsubscribe\",\n                subscription: {\n                    endpoint: failedItem.endpoint\n                }\n            }\n        };\n\n        node.send(outputMsg);\n    }\n}","outputs":1,"noerr":0,"x":1220,"y":220,"wires":[["a07ca405.68cb78"]]},{"id":"1da91b89.be0054","type":"vapid-configuration","z":"","subject":"mailto:<your_email_address>","publicKey":"","privateKey":"","gcmApiKey":"","name":""}]
+```
+
+Although this seems very logical, there are major disadvantages: when a device is not reachable (battery low, poor signal, ...) it will automatically be unsubscribed, and as a result no notifications will be send to it anymore.
+
+Therefore this is ***bad practice***, but it is added here for completeness!
+
