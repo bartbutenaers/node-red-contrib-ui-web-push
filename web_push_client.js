@@ -61,14 +61,6 @@ module.exports = function(RED) {
     
     function WebPushClientNode(config) {
         var node = this;
-
-        console.log("************************ we zijn er ***********************");
-        console.log(node.listeners("input"));
-        
-        node.removeAllListeners(["input"]);
-        node.on("input", function(msg) {
-            console.log("************************ Jip ***********************");
-        });
         
         if(ui === undefined) {
             ui = RED.require("node-red-dashboard")(RED);
