@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "A Node-RED widget node to send web push notifications via the dashboard",
     "dependencies": {
-        "node-red-contrib-web-push": "0.0.2"
+        "node-red-contrib-web-push": "~0.0.2"
     },
     "author": {
         "name": "Bart Butenaers"
