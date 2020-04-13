@@ -1,6 +1,10 @@
 # node-red-contrib-ui-web-push
 A Node-RED widget node to send web push notifications via the Node-RED dashboard.
 
+This node allows notifications to be send to devices (running Windows, Android, Linux, OSX), entirely integrated into Node-RED.  This way no third-party messaging tools (like Telegram, PushBullet ...) are required anymore.  A typical use case is sending notifications from a Node-RED flow to an Android smartphone:
+
+![Android notification](https://user-images.githubusercontent.com/14224149/79164690-d69dc980-7de1-11ea-8b81-44d28a65dc74.png)
+
 Really would like to thank Maxim Salnikov ([@webmaxru](https://twitter.com/webmaxru)) - PWA speaker/trainer, organizer of [PWA Slack](https://aka.ms/pwa-slack) and [PWACon](https://twitter.com/pwaconf)!
 By reviewing this node and sharing his knowledge about web push notifications, the user friendlyness of this UI node has been improved heavily!  Lots of the practical tips on this page are provided by Maxim ...
 
@@ -12,10 +16,20 @@ npm install node-red-contrib-ui-web-push
 ```
 
 Make sure to read these prerequisites:
-+ The [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) also will be installed automatically as a dependency!!  These nodes are required, because the UI node shares the same config nodes!
-+ Use a ***browser that supports*** service workers and push notifications.  The Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to try to convince Apple ...
++ The [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) also will be installed automatically as a dependency!!
+   + The *node-red-contrib-web-push* nodes can be used to send web push notifications to the device.
+   + The *node-red-contrib-ui-web-push* node can be used to receive those web push notifications on the device.
+   
+   Both node suites will *share* the same VAPID configuration nodes, so you only have to generate the keypair (see below) once.
+
++ Use a ***browser that supports*** service workers and push notifications.  
+
+   **CAUTION:** Apple still doesn't allow web push notifications in iOS (see [article](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications/)).  Although Safari supports web push notification in OSX, it doesn't support them in iOs.  And since other browsers (like e.g. Chrome) on iOS are just wrappers around Safari, those browsers also won't be able to support it on these devices!  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to try to convince Apple ...
+
 + Some browsers (e.g. Chrome) only support web push via an ***SSL connection***, so make sure the Node-RED dashboard is available via https.
+
 + Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use ***trusted certificates*** (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
+
 + The Node-RED ***context should be persistent***!!  Indeed the example subscription manager (Function node) will store all subscriptions on flow memory, which need to be remembered even after a system restart.  Otherwise the subscriptions will be lost, thus it would become impossible to send notifications to those devices...
 
 ## Support my Node-RED developments
@@ -92,6 +106,8 @@ As soon as a user has subscribed successfully to receive notifications, the labe
 
 1. When clicking the *"Unsubscribe"* button, an unsubscribe message will be send to the subscription manager (function) node.
 
+   ![Unsubscribe button](https://user-images.githubusercontent.com/14224149/79165537-9f301c80-7de3-11ea-94f5-ef719e492162.png)
+
 1. The subscription manager will remove the subscription from the flow memory.
 
 1. The label on the button will switch automatically from *"Unsubscribe"* to *"Subscribe"*.
@@ -135,9 +151,13 @@ The following example flow will show an image inside the notification:
 [{"id":"8b685850.ce1428","type":"function","z":"4142483e.06fca8","name":"Get subscriptions","func":"// Use the flow variable that has been set in Demo Web Push Manager API (\"storeInFile\" context)\nmsg.subscriptions = flow.get('pushSubscriptions', \"storeInFile\") || []\n\nreturn msg;","outputs":1,"noerr":0,"x":890,"y":1180,"wires":[["e45925bf.a85bb8"]]},{"id":"e45925bf.a85bb8","type":"web-push","z":"4142483e.06fca8","name":"Send notification to the subscribers","vapidConfiguration":"1da91b89.be0054","x":1160,"y":1180,"wires":[[]]},{"id":"362b4b30.09d254","type":"inject","z":"4142483e.06fca8","name":"Send custom notifcation","topic":"","payload":"{\"notification\":{\"title\":\"Hello Node-RED user !\",\"body\":\"Click me to open your dashboard\"},\"data\":{\"silent\":true,\"requireInteraction \":true,\"icon\":\"https://nodered.org/about/resources/media/node-red-icon-2.png\",\"image\":\"https://user-images.githubusercontent.com/14224149/73395580-19bac700-42e0-11ea-90c2-71cb4f496637.png\"}}","payloadType":"json","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":420,"y":1180,"wires":[["180914ab.2b6e8b"]]},{"id":"180914ab.2b6e8b","type":"change","z":"4142483e.06fca8","name":"payload => notification","rules":[{"t":"move","p":"payload","pt":"msg","to":"notification","tot":"msg"}],"action":"","property":"","from":"","to":"","reg":false,"x":660,"y":1180,"wires":[["8b685850.ce1428"]]},{"id":"1da91b89.be0054","type":"vapid-configuration","z":"","subject":"mailto:<enter_your_email_address_here>","publicKey":"","privateKey":"","gcmApiKey":"","name":""}]
 ```
 
-Which result in a notification like this:
+Which result in a notification like this on Windows 10:
 
-![Nofitication image](https://user-images.githubusercontent.com/14224149/74590860-bdabae80-5012-11ea-96f5-b2949e52cbfc.png)
+![Nofitication image Windows](https://user-images.githubusercontent.com/14224149/74590860-bdabae80-5012-11ea-96f5-b2949e52cbfc.png)
+
+Or like this, after the small arrow inside the notification has been clicked:
+
+![Notification image Android](https://user-images.githubusercontent.com/14224149/79164759-fd5c0000-7de1-11ea-9f5f-37ebb5aafcac.png)
 
 Remark: make sure the image size and aspect ratio follows the [guidelines](https://documentation.onesignal.com/docs/web-push-notification-icons#section-image).
 
