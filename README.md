@@ -12,7 +12,7 @@ npm install node-red-contrib-ui-web-push
 ```
 
 Make sure to read these prerequisites:
-+ It is **REQUIRED** that the [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) are also installed!!  This UI node uses the config node from that package!
++ The [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) also will be installed automatically as a dependency!!  These nodes are required, because the UI node shares the same config nodes!
 + Use a ***browser that supports*** service workers and push notifications.  The Safari browser still doesn't support web push notifications in iOS.  But you can sign a [petition](https://www.wonderpush.com/blog/when-will-ios-implement-web-push-notifications) to try to convince Apple ...
 + Some browsers (e.g. Chrome) only support web push via an ***SSL connection***, so make sure the Node-RED dashboard is available via https.
 + Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use ***trusted certificates*** (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
@@ -58,7 +58,7 @@ The following example flow allows you to send a predefined *"Hello Node-RED"* no
 ## Node usage
 
 This section explains step-by-step how to use this node:
-1. Make sure the above example flow is up and running, and that your dashboard is secured with http and a trusted certificate!
+1. Make sure the above example flow is up and running, and that your dashboard is secured with https and a trusted certificate!
 
 1. Create a new configuration (node), where you need to enter a (valid) email address.  And generate a new key pair once, via the button in the config node screen:
 
