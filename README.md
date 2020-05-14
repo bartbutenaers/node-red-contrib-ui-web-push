@@ -142,6 +142,8 @@ When activated, the 'Subscribe' button will be disabled when the browser doesn't
 
 ### Create custom notification (with embedded image)
 
+:warning: Not all browsers [support](https://developer.mozilla.org/en-US/docs/Web/API/notification/image) images inside notifications!  Those browsers will show the notification, but without the image...
+
 Beside to predefined notifications, it is also possible to create a notification from scratch (in JSON format).  This allows us to create more advanced notifications, which are not possible via the predefined notifications...
 
 The following example flow will show an image inside the notification:
@@ -168,6 +170,8 @@ A typical use case of this flow is sending an image captured by an IP camera, wh
 Thanks to Shutterstock for this royality free [image](https://www.shutterstock.com/image-photo/funny-childlike-burglar-bandit-puts-hands-330700175)!
 
 ### Show button(s) inside the notification
+
+:warning: Not all browsers [support](https://developer.mozilla.org/en-US/docs/Web/API/notification/actions) buttons (i.e. actions) inside notifications!  Those browsers will show the notification, but without the image...
 
 It is possible to show *buttons* inside a web push notification, to allow the user to trigger specific *actions* in your Node-RED flow.
 
