@@ -30,7 +30,11 @@ Make sure to read these prerequisites:
 
 + Some browsers (e.g. Chrome) don't support web push with self-signed certificates, so make sure to use ***trusted certificates*** (e.g. using Letsencrypt).  Otherwise an error like *"An SSL certificate error occurred when fetching the script"* will appear in the browser's console log...
 
-+ The Node-RED ***context should be persistent***!!  Indeed the example subscription manager (Function node) will store all subscriptions on flow memory, which need to be remembered even after a system restart.  Otherwise the subscriptions will be lost, thus it would become impossible to send notifications to those devices...
+   Remark: since it is not easy to setup LetsEncrypt certificates, I have also developed the [node-red-contrib-acme-client](https://github.com/bartbutenaers/node-red-contrib-acme-client) node, and a [pull request](https://github.com/node-red/node-red/pull/2551) for automatic certificate renewal in Node-RED.  Both are at the moment not published yet on NPM, but stay tuned ...
+
++ The Node-RED ***context should be persistent***!!  Indeed the example subscription manager (Function node) will store all subscriptions on flow memory, which need to be remembered even after a system restart.  Otherwise the subscriptions will be lost, thus it would become impossible to send notifications to those devices!  Read this [discussion](https://discourse.nodered.org/t/a-guide-to-understanding-persistent-context/4115) how to setup persistency:
+
+   ![persistency](https://user-images.githubusercontent.com/14224149/82137540-7c958700-9819-11ea-8de0-c5c5bf30e85f.png)
 
 ## Support my Node-RED developments
 
