@@ -252,28 +252,28 @@ Much more other examples of web push notifications can be found on the internet.
 
 To be able to understand the Node-RED flow for web-push (see further below), a basic understand of the web-push flow is advised:
 
-![Overview](https://user-images.githubusercontent.com/14224149/74592165-e9349600-501e-11ea-8108-5f06f5564bed.png)
+![Overview](https://user-images.githubusercontent.com/14224149/88021916-a1b2b880-cb2e-11ea-8db6-179c26467e0d.png)
 
-0. In the config node (of the node-red-contrib-web-push nodes), it is required once to generate a *key pair* (both a private key and a public key)!
+0. In the config node (of the node-red-contrib-web-push nodes), it is required to generate once manually a VAPID *key pair* (both a private key and a public key)!
 
-1. As soon as the Node-RED dashboard is opened in the browser on a device, the node-red-contrib-ui-web-push node will start a ***service worker***.  
+1. As soon as the Node-RED dashboard is opened in the browser on a device, the node-red-contrib-ui-web-push node will start a ***service worker*** and show a (un)subscribe button.  
    Remark: service workers are background processes that run in a browser, which allow us to handle notifications even when the browser app is currently not open...
    
 2. The service worker will get the *public* VAPID key from the Node-RED server.
 
-3. The service worker will pass the *public* VAPID key to an online push service.  This way the push service can link this device to the specified public key.  The push service will return a *subscription*, which is in fact an URL (to the device via this push service).
+3. The service worker will pass the *public* VAPID key to an online push service.  This way the push service can link this device to the specified public key.  The push service will return a *subscription*, which is in fact an URL (to access this browser on this device via this push service).
    
    Remark: The browser will determine on its own which online push service will be used, since almost each browser vendor will offer his own push service.  There exist cloud web push services from Microsoft, Google, Apple, Mozilla ...
    
-4. The service worker will pass the subscription to the Node-RED flow, which will arrive as a http request via a Http-in node.
+4. As soon as the (un)subscribe button is clicked, the the (un)subscription will be passed to the Node-RED flow.  The (un)subscription will be sent as an output message on the node-red-contrib-ui-web-push node, and need to be wired to the subscription manager.
 
-5. The subscription manager will store the credentials in a list.  In the example flow below, the credential list is a flow variable.
+5. The subscription manager will store the subscriptions in a list (when a subscribe message arrives), or remove the subscription from the list (when an unsubscribe message arrives).  The subscription manager offered in the above example flows, will store the subscription list in the flow memory.
 
-6. When the Node-RED flow wants to send a notification, all subscriptions will be loaded (e.g. from the flow variable).
+6. When the Node-RED flow wants to send a notification to the browser on the device, all subscriptions will be loaded (from the subscription list on flow memory).
 
-7. The notification is send to all subscriptions.  Which means that all the subscription URLs will be called, so a request will be send to (one or more) online push services.  This request will contain the key pair, to allow the push service to check whether we are authorized to send a notification to the specified subscription.
+7. The notification is send to all subscriptions.  Which means that all the subscription URLs will be called, so notification requests will be send to the corresponding online push services.  We will include the VAPID key pair in those notification requests, to allow the push service to check whether we are authorized to send a notification to the specified subscription.  Otherwise anybody could start sending notifications to your devices...
 
-8. The push service will forward our request to the device, where the browser app will call our background service worker.  *The advantage is that the dashboard doesn't has to be open, in order to be able to receive notifications!*  
+8. The push service will forward our request to the device, where the browser app will be started automatically (if not started yet).  The browser app will call our background service worker.  *The advantage is that the dashboard doesn't has to be open, in order to be able to receive notifications!*  
    
    Remark: at this point the service worker is not allowed to do lots of things, because first a user gesture is required...
    
