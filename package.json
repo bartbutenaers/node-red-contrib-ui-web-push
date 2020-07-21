@@ -13,7 +13,9 @@
         "node-red",
         "push",
         "notification",
-        "message"
+        "message",
+        "android",
+        "windows"
     ],
     "bugs": {
         "url": "https://github.com/bartbutenaers/node-red-contrib-ui-web-push/issues"
