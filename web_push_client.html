@@ -34,6 +34,7 @@
             sendSubscription: {value: false},
             showConfirmations: {value: false},
             disableButton: {value: false},
+            showTooltip: {value: false},
             subscribeLabel: {value:"Subscribe", required: true},
             unsubscribeLabel: {value:"Unsubscribe", required: true},
             name: {value: ''}
@@ -108,6 +109,11 @@
         <input type="checkbox" id="node-input-disableButton" style="display: inline-block; width: auto; vertical-align: top;">
         <label for="node-input-disableButton" style="width:70%;"> Disable button when no browser support</label>
     </div>
+    <div class="form-row">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-showTooltip" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-showTooltip" style="width:70%;"> Show button tooltips</label>
+    </div>
     <br>
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
@@ -128,5 +134,7 @@
     <p><strong>Show confirmations at successfull (un)subscriptions:</strong><br/>
     When activated, a confirmation popup will appear when a subscription or unsubscription is successfull (after the button has been clicked).</p>
     <p><strong>Disable button when no browser support:</strong><br/>
-    When activated, the 'Subscribe' button will be disabled when the browser doesn't support service workers or push notifications.</p>    
+    When activated, the 'Subscribe' button will be disabled when the browser doesn't support service workers or push notifications.</p>
+    <p><strong>Show button tooltips:</strong><br/>
+    When activated, the button will have a tooltip.  The tooltip can contain information about the action that can be performed, or the reason why the button is disabled.</p>    
 </script>
