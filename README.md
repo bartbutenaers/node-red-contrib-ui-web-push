@@ -38,6 +38,8 @@ Make sure to read these prerequisites:
 + The Node-RED ***context should be persistent***!!  Indeed the example subscription manager (Function node) will store all subscriptions on flow memory, which need to be remembered even after a system restart.  Otherwise the subscriptions will be lost, thus it would become impossible to send notifications to those devices!  Read this [discussion](https://discourse.nodered.org/t/a-guide-to-understanding-persistent-context/4115) how to setup persistency:
 
    ![persistency](https://user-images.githubusercontent.com/14224149/82137540-7c958700-9819-11ea-8de0-c5c5bf30e85f.png)
+   
+   This is of course not required if you develop your own subscription manager, which stores the subscriptions e.g. in a database.
 
 ## Support my Node-RED developments
 
