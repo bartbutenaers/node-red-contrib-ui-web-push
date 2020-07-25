@@ -16,6 +16,8 @@ npm install node-red-contrib-ui-web-push
 ```
 
 Make sure to read these prerequisites:
++ Since this is a dashboard UI node, the Node-RED [dashboard](https://github.com/node-red/node-red-dashboard) should be installed.
+
 + The [node-red-contrib-web-push](https://github.com/webmaxru/node-red-contrib-web-push) nodes (developed by Maxim) also will be installed automatically as a dependency!!
    + The *node-red-contrib-web-push* nodes can be used to send web push notifications to the device.
    + The *node-red-contrib-ui-web-push* node can be used to receive those web push notifications on the device.
