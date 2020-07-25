@@ -105,7 +105,7 @@ module.exports = function(RED) {
                     return orig.msg;
                 }
             },
-            initController: function($scope, events) {
+            initController: function($scope, events) {                       
                 $scope.flag = true;
                 $scope.buttonDisabled = false;
 
@@ -182,11 +182,11 @@ module.exports = function(RED) {
                             // Set the UI button status initially correct, to reflect the current subscription
                             updateUI(pushSubscription);
                         }).catch(function(error) {
-                            alert('Cannot get subscription from service worker:\n' + error);
+                            logError('Cannot get subscription from service worker:\n' + error);
                             return;
                         });
                     }).catch(function(error) {
-                        alert('Cannot register service worker:\n' + error);
+                        logError('Cannot register service worker:\n' + error);
                         return;
                     });
                 }
@@ -202,6 +202,17 @@ module.exports = function(RED) {
                         outputArray[i] = rawData.charCodeAt(i);
                     }
                     return outputArray;
+                }
+                
+                function logError(error) {
+                    // Log the error on the client-side in the browser console log
+                    console.log(error);
+                    
+                    // Send the error to the server-side to handle there
+                    $scope.send({
+                        payload: error,
+                        topic: "error"
+                    });
                 }
                 
                 function updateUI(pushSubscription) {
@@ -233,12 +244,12 @@ module.exports = function(RED) {
                             break;
                         case "denied": 
                             // TODO is this the correct way of working ??
-                            alert("This domain is denied to send notifications!\nIt can be allowed again via the browser settings.");
+                            logError("This domain is denied to send notifications!\nIt can be allowed again via the browser settings.");
                             return;
                         case "default":
                             // The user decision is unknown, since the user has closed the permission popup via the 'X' button.
                             // In this case the application will act as if permission was denied.
-                            alert("This domain is not explicit granted to send notifications!\nIt can be allowed again via the browser settings.");
+                            logError("This domain is not explicit granted to send notifications!\nIt can be allowed again via the browser settings.");
                             return;
                     }
 
@@ -260,12 +271,8 @@ module.exports = function(RED) {
 
                         // Set the UI button status initially correct, to reflect the new subscription
                         updateUI(pushSubscription);
-                        
-                        if ($scope.config.showConfirmations === true) {
-                            alert("Succesfully subscribed to receive Node-RED notifications");
-                        }
                     }).catch(function(error) {
-                        alert("Cannot subscribe to the browser's push manager:\n" + error);
+                        logError("Cannot subscribe to the browser's push manager:\n" + error);
                     });
                 }
                     
@@ -286,19 +293,15 @@ module.exports = function(RED) {
                         
                                 // Set the UI button status initially correct, to reflect the removed subscription
                                 updateUI(null);
-                                
-                                if ($scope.config.showConfirmations === true) {
-                                    alert("Succesfully unsubscribed from receiving Node-RED notifications");
-                                }
                             }
                             else {
-                                alert("Cannot unsubscribe from the browser's push manager");
+                                logError("Cannot unsubscribe from the browser's push manager");
                             }
                         }).catch(function(error) {
-                            alert('Cannot unsubscribe from the push manager:\n' + error);
+                            logError('Cannot unsubscribe from the push manager:\n' + error);
                         })
                     }).catch(function(error) {
-                        alert('Cannot get a subscription from the service worker:\n' + error);
+                        logError('Cannot get a subscription from the service worker:\n' + error);
                     });
                 }
                 
@@ -328,7 +331,7 @@ module.exports = function(RED) {
                             break;
                         default: // "NONE"
                             // We should never arrive here, because the button should be disabled ...
-                            alert("Internal error: no action is currently possible");
+                            logError("No action is currently possible");
                     }
                     
                 }
