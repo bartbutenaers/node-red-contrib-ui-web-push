@@ -27,12 +27,29 @@ module.exports = function(RED) {
         config.publicVapidKey = webPushConfig.publicKey;
         
         // The configuration is a Javascript object, which needs to be converted to a JSON string
-        var configAsJson = JSON.stringify(config);  
+        var configAsJson = JSON.stringify(config);
         
-        var html = String.raw`
+        var tooltipHtml = "";
+        
+        // Only show a tooltip when requested
+        if (config.showTooltip) {
+            tooltipHtml = String.raw`
+                <md-tooltip
+                    class="custom-tooltip"
+                    md-delay="700" 
+                    md-direction="bottom"
+                    ng-bind-html="buttonTooltip">
+                </md-tooltip>`;
+        }
+        
+        var html = String.raw`  
+            <style>
+            .custom-tooltip {
+                font-size: 14px;
+            }
+            </style>
             <md-button 
                 id="button_subscribe_` + config.id + `"
-                class="md-raised"
                 ng-class="{'nr-dashboard-disabled': !buttonEnabled}"
                 ng-init='init(` + configAsJson + `)'
                 ng-click="buttonClick()"
@@ -46,12 +63,8 @@ module.exports = function(RED) {
                 <span
                     ng-style="{'padding-left':'10px', 'padding-right':'10px'}"
                     ng-bind-html="buttonLabel">
-                </span> 
-                <md-tooltip 
-                    md-delay="700" 
-                    md-direction="bottom"
-                    ng-bind-html="buttonTooltip">
-                </md-tooltip>
+                </span>`
+                + tooltipHtml + `
             </md-button>`;   
 
         return html;
@@ -104,14 +117,14 @@ module.exports = function(RED) {
                         $scope.buttonEnabled = false;
                         $scope.buttonIcon    = "fa-thumbs-o-up";
                         $scope.buttonLabel   = "<span>" + $scope.config.subscribeLabel + "</span>";
-                        $scope.buttonTooltip = "<span>This browser doesn't support service workers!</span>";
+                        $scope.buttonTooltip = "<span>No service worker support!</span>";
                         
                         if ($scope.config.disableButton) {
                             $scope.buttonDisabled = true;
                         }
                         
                         // Update the new text on the button
-                        $scope.$apply();
+                        $scope.$digest();
                         
                         return;
                     }
@@ -123,14 +136,14 @@ module.exports = function(RED) {
                         $scope.buttonEnabled = false;
                         $scope.buttonIcon    = "fa-thumbs-o-up";
                         $scope.buttonLabel   = "<span>" + $scope.config.subscribeLabel + "</span>";
-                        $scope.buttonTooltip = "<span>This browser doesn't support push notifications!</span>";
+                        $scope.buttonTooltip = "<span>No push notification support!</span>";
                         
                         if ($scope.config.disableButton) {
                             $scope.buttonDisabled = true;
                         }
                         
                         // Update the new text on the button
-                        $scope.$apply();
+                        $scope.$digest();
                         
                         return;
                     }                    
@@ -197,19 +210,19 @@ module.exports = function(RED) {
                         $scope.buttonEnabled = true;
                         $scope.buttonIcon    = "fa-ban";
                         $scope.buttonLabel   = "<span>" + $scope.config.unsubscribeLabel + "</span>";
-                        $scope.buttonTooltip = "<span>Unsubscribe to stop receiving Node-RED web push notifications</span>";
+                        $scope.buttonTooltip = "<span>Stop receiving notifications</span>";
                     }
                     else {
                         $scope.buttonAction  = "SUBSCRIBE";
                         $scope.buttonEnabled = true;
                         $scope.buttonIcon    = "fa-play-circle-o";
                         $scope.buttonLabel   = "<span>" + $scope.config.subscribeLabel + "</span>";
-                        $scope.buttonTooltip = "<span>Subscribe to receive Node-RED web push notifications</span>";
+                        $scope.buttonTooltip = "<span>Start receiving notifications</span>";
                     }
                     
                     // Force an update of the view (i.e. digestion) to make sure the update of the model is visualized.
                     // Otherwise the updated wasn't executed for me on Windows 10 (Edge and Firefox) and Android (Chrome)...
-                    $scope.$apply();
+                    $scope.$digest();
                 }
 
                 function subscribe(permission) {
