@@ -8,6 +8,8 @@ This node allows notifications to be send to devices (running Windows, Android, 
 Really would like to thank Maxim Salnikov ([@webmaxru](https://twitter.com/webmaxru)) - PWA speaker/trainer, organizer of [PWA Slack](https://aka.ms/pwa-slack) and [PWACon](https://twitter.com/pwaconf)!
 By reviewing this node and sharing his knowledge about web push notifications, the user friendliness of this UI node has been improved heavily!  Lots of the practical tips on this page are provided by Maxim ...
 
+Remark: the flows from this readme page are also available via the Node-RED *"Import"* menu.
+
 ## Install
 
 Run the following NPM command in your Node-RED user directory (typically ~/.node-red):
