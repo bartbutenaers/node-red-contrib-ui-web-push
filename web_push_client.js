@@ -65,7 +65,8 @@ module.exports = function(RED) {
                     ng-bind-html="buttonLabel">
                 </span>`
                 + tooltipHtml + `
-            </md-button>`;   
+            </md-button>`;
+            //<md-progress-circular ng-show="showProgressBar" md-mode="indeterminate"></md-progress-circular>   
 
         return html;
     };
@@ -94,6 +95,9 @@ module.exports = function(RED) {
             emitOnlyNewValues: false,
             forwardInputMessages: false,
             storeFrontEndInputAsState: false,
+            // Avoid (un)subscription confirmation popup dialog to appear automatically after deploy.
+            // (see https://github.com/node-red/node-red-dashboard/pull/558)
+            persistantFrontEndValue: false,
             convertBack: function (value) {
                 return value;
             },
@@ -108,6 +112,7 @@ module.exports = function(RED) {
             initController: function($scope, events) {                       
                 $scope.flag = true;
                 $scope.buttonDisabled = false;
+                $scope.showProgressBar = false;
 
                 $scope.init = function (config) {
                     $scope.config = config;
@@ -147,7 +152,7 @@ module.exports = function(RED) {
                         
                         return;
                     }                    
-                    
+         
                     // Compose the url where the browser can fetch our service worker Javascript file.
                     // The node.id contains a '.' which is not allowed in urls, so let's replace it by a '_'
                     var serviceUrl = 'ui_web_push/' + $scope.config.id.replace(/\./g,'_') + '/nodered_push_service.js';
@@ -175,7 +180,7 @@ module.exports = function(RED) {
                                 $scope.send({
                                     // TODO moeten we JSON.stringify van de subscription doen ???
                                     payload: pushSubscription,
-                                    topic: "subscribe"
+                                    topic: "subscription_existing"
                                 });
                             }
 
@@ -237,6 +242,8 @@ module.exports = function(RED) {
                 }
 
                 function subscribe(permission) {
+                    $scope.showProgressBar = true;
+                    
                     switch (permission) {
                         case "granted": 
                             // The user has explicitly granted permission for the current origin to display system notifications.
@@ -264,7 +271,7 @@ module.exports = function(RED) {
                         // Send the new push subscription to the subscription manager inside the Node-RED flow
                         $scope.send({
                             payload: pushSubscription,
-                            topic: "subscribe"
+                            topic: "subscription_new"
                         });
 
                         console.log("Message has been send to subscribe in the Node-RED subscription manager");
@@ -273,10 +280,14 @@ module.exports = function(RED) {
                         updateUI(pushSubscription);
                     }).catch(function(error) {
                         logError("Cannot subscribe to the browser's push manager:\n" + error);
+                    }).finally(function() {
+                        $scope.showProgressBar = false;
                     });
                 }
                     
                 function unsubscribe() {
+                    $scope.showProgressBar = true;
+                    
                     // Check whether currently a push subscription is already available for the service worker
                     $scope.serviceWorkerRegistration.pushManager.getSubscription().then(function(pushSubscription) {
                         pushSubscription.unsubscribe().then(function(successful) {
@@ -286,7 +297,7 @@ module.exports = function(RED) {
                                 // Remove the subscription from the subscription manager inside the Node-RED flow
                                 $scope.send({
                                     payload: pushSubscription,
-                                    topic: "unsubscribe"
+                                    topic: "unsubscription"
                                 });
                                 
                                 console.log("Removed the subscription from the subscription manager in Node-RED");
@@ -302,6 +313,8 @@ module.exports = function(RED) {
                         })
                     }).catch(function(error) {
                         logError('Cannot get a subscription from the service worker:\n' + error);
+                    }).finally(function() {
+                        $scope.showProgressBar = false;
                     });
                 }
                 
@@ -387,7 +400,11 @@ module.exports = function(RED) {
     //     ui: { path: "mypath" },
     var uiPath = ((RED.settings.ui || {}).path) || 'ui';
 	
-    // Create the complete server-side path
+    // Create the complete server-side path.
+    // Normally the node id is not required in the endpoint, however we want to register the (same) service worker script
+    // for every ui-web-push node.  Reason is that each service worker registration can have its own push subscription.
+    // Indeed each ui-web-push node can have its own vapid configuration, so it needs its own service worker.  That 
+    // way multiple vapid configurations can be used on a single dashboard, although I don't see any use cases at the moment.
     uiPath = '/' + uiPath + '/ui_web_push/:node_id/nodered_push_service.js';
     
     // Replace a sequence of multiple slashes (e.g. // or ///) by a single one
@@ -426,9 +443,8 @@ module.exports = function(RED) {
         var nodeRedUrl = req.protocol + '://' + req.get('host'); // E.g. https://somehostname:1880/webpush
         var dashboardPath = ((RED.settings.ui || {}).path) || 'ui'; // Same way of working as above
         
-        // At the start of the service.js file, 3 placeholders need to be replaced by their real value.
+        // At the start of the service.js file, 2 placeholders need to be replaced by their real value.
         // This is required because the service worker will run in the browser background, so it needs to be able to communicate with the Node-RED server ...
-        //fileContent = fileContent.replace("#public-vapid-key#", publicVapidKey);
         fileContent = fileContent.replace("#node-red-url#"    , nodeRedUrl);
         fileContent = fileContent.replace("#dashboard-path#"  , dashboardPath);
         // TODO we could define the '/webpush' path inside the config screen, and inject it as a 4th parameter into the file ...
