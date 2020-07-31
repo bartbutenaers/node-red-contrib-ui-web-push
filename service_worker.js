@@ -7,8 +7,7 @@
 
 console.log("Node-RED dashboard service worker has been registered");
 
-// The values of these 3 placeholders will be injected by the http endpoint, before serving it to the browser
-//const publicVapidKey = "#public-vapid-key#";
+// The values of these 2 placeholders will be injected by the http endpoint, before serving it to the browser
 const nodeRedUrl     = "#node-red-url#";
 const dashboardPath  = "#dashboard-path#";
 
