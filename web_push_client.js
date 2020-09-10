@@ -439,9 +439,21 @@ module.exports = function(RED) {
             return;
         }
             
-        //var publicVapidKey = webPushClientNode.getVapidPublicKey();
         var nodeRedUrl = req.protocol + '://' + req.get('host'); // E.g. https://somehostname:1880/webpush
-        var dashboardPath = ((RED.settings.ui || {}).path) || 'ui'; // Same way of working as above
+        
+        // Determine the path to the dashboard, which will be used when the notification is being clicked
+        var dashboardPath = "";
+        if (RED.settings.httpRoot && RED.settings.httpRoot !== "" && RED.settings.httpRoot !== "/") {
+            // The httpRoot value overrides the httpNodeRoot value
+            dashboardPath += RED.settings.httpRoot;
+        }
+        else {
+            // Only use the httpNodeRoot value when it is not false
+            if (RED.settings.httpNodeRoot !== false && RED.settings.httpRoot !== "" && RED.settings.httpRoot !== "/") {
+                dashboardPath += RED.settings.httpNodeRoot;
+            }
+        }
+        dashboardPath += ((RED.settings.ui || {}).path) || 'ui';
         
         // At the start of the service.js file, 2 placeholders need to be replaced by their real value.
         // This is required because the service worker will run in the browser background, so it needs to be able to communicate with the Node-RED server ...
