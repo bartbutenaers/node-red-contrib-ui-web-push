@@ -299,6 +299,29 @@ To be able to understand the Node-RED flow for web-push (see further below), a b
 
 10. As soon as the user clicks on the notification, our service worker is called again.  Due to the user interaction, the service worker is now allowed to do more (so it can now open the dashboard page) ...
 
+## Notification sound
+Although it is possible to specify (inside the web push notification) which sound needs to be played on the device (e.g. the browser on your mobile phone), this is currently ***not supported*** by any browser.  So instead of specifying the sound inside the notification, it is only possible to specify manually once the sound on the device.
+
+Via the following steps you can configure in Android the sound of the Node-RED dashboard notifications:
+1. Open the 'Settings' on the Android device.
+2. Select 'Apps'.
+3. Choose the browser app (which you have used previously to subscribe for Node-RED notifications) e.g. Chrome.
+4. Click on the browser app entry, to got to the settings of that app.
+5. For a browser app there should be a list of URL's in the 'Sites' section.  Click on the URL that you use to access your Node-RED dashboard.
+6. Now you can configure the sound itself, and other sound related sessions for this specific URL.
+
+Note that these step might differ on other Android flavours ...
+
+It is also very easy to keep getting sound for Node-RED notifications, while other notifications are quiet.  This is useful when you keep your smartphone during the night near your bed, but you only want to be alarmed by Node-RED.  To do that, setup the ***'Do Not Disturb'*** settings once:
+
+1. Open the 'Settings' on the Android device.
+2. Select 'Sound & vibration'.
+3. Select 'Do Not Disturb'.
+4. Add your browser app (e.g. Chrome) to the list of exceptions.
+5. In the list of URL's, turn on the switch of the URL that you use to access your Node-RED dashboard.
+
+From now on every time you activate the 'Do Not Disturb' option, you won't get any notifications on your Android device except your Node-RED notifications!
+
 ## Advanced stuff
 
 This section contains information that will not be needed in normal circumstances.
