@@ -1,3 +1,8 @@
+> [!CAUTION]
+> **This third-party ui node was developed for the Node-RED AngularJs [dashboard](https://flows.nodered.org/node/node-red-dashboard), which is end of life.
+> For the new VueJs Node-RED dashboard 2.0, I created a new [widget](https://github.com/bartbutenaers/node-red-dashboard-2-ui-web-push) but that is still experimental!!!
+> Due to free time constraints, this old ui node won't be supported anymore!!**
+
 # node-red-contrib-ui-web-push
 A Node-RED widget node to send web push notifications via the Node-RED dashboard.
 
